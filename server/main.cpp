@@ -14,6 +14,7 @@
 
 std::map<SOCKET, std::string> clientSockets;
 std::mutex clientSocketsMutex;
+bool running = true;
 
 void list_clients() {
     std::lock_guard<std::mutex> lock(clientSocketsMutex);
@@ -25,7 +26,7 @@ void list_clients() {
 }
 
 void remove_disconnected_clients() {
-    while (true) {
+    while (running) {
         std::this_thread::sleep_for(std::chrono::seconds(5));
         std::lock_guard<std::mutex> lock(clientSocketsMutex);
         for (auto it = clientSockets.begin(); it != clientSockets.end(); ) {
@@ -49,6 +50,12 @@ void handle_client(SOCKET ClientSocket) {
     std::string command;
 
     while (true) {
+        std::lock_guard<std::mutex> lock(clientSocketsMutex);
+        if (clientSockets.find(ClientSocket) == clientSockets.end()) {
+            std::cout << "Client disconnected, waiting for new connection..." << std::endl;
+            break;
+        }
+
         std::cout << "Enter command: ";
         std::getline(std::cin, command);
         if (command == "exit") {
@@ -118,7 +125,7 @@ int main() {
     std::thread disconnectionChecker(remove_disconnected_clients);
     disconnectionChecker.detach();
 
-    while (true) {
+    while (running) {
         sockaddr_in clientAddr;
         int clientAddrSize = sizeof(clientAddr);
         SOCKET ClientSocket = accept(ListenSocket, (sockaddr*)&clientAddr, &clientAddrSize);
