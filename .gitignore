@@ -31,3 +31,9 @@
 *.out
 *.app
 .vs
+
+# Ignore specific directories
+rat/x64/
+x64/
+server/x64/
+
