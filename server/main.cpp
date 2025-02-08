@@ -50,9 +50,18 @@ void handle_client(SOCKET ClientSocket) {
     std::string command;
 
     while (true) {
-        std::lock_guard<std::mutex> lock(clientSocketsMutex);
-        if (clientSockets.find(ClientSocket) == clientSockets.end()) {
-            std::cout << "Client disconnected, waiting for new connection..." << std::endl;
+        int iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
+        if (iResult > 0) {
+            std::string output(recvbuf, iResult);
+            std::cout << "Received from client: " << output << std::endl;
+        }
+        else if (iResult == 0 || (iResult == SOCKET_ERROR && WSAGetLastError() == WSAECONNRESET)) {
+            std::cout << "Client disconnected: " << clientSockets[ClientSocket] << std::endl;
+            {
+                std::lock_guard<std::mutex> lock(clientSocketsMutex);
+                clientSockets.erase(ClientSocket);
+            }
+            closesocket(ClientSocket);
             break;
         }
 
@@ -80,12 +89,6 @@ void handle_client(SOCKET ClientSocket) {
         }
 
         send(ClientSocket, command.c_str(), command.length(), 0);
-
-        int iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
-        if (iResult > 0) {
-            std::string output(recvbuf, iResult);
-            std::cout << output << std::endl;
-        }
     }
 }
 
@@ -98,6 +101,7 @@ void add_client(SOCKET ClientSocket, sockaddr_in clientAddr) {
         clientSockets[ClientSocket] = clientInfo;
     }
     std::cout << "Client connected: " << clientInfo << std::endl;
+    std::thread(handle_client, ClientSocket).detach();
 }
 
 int main() {
@@ -121,7 +125,6 @@ int main() {
     freeaddrinfo(result);
     listen(ListenSocket, SOMAXCONN);
 
-    std::thread clientHandler;
     std::thread disconnectionChecker(remove_disconnected_clients);
     disconnectionChecker.detach();
 
@@ -131,10 +134,6 @@ int main() {
         SOCKET ClientSocket = accept(ListenSocket, (sockaddr*)&clientAddr, &clientAddrSize);
         if (ClientSocket != INVALID_SOCKET) {
             add_client(ClientSocket, clientAddr);
-            if (!clientHandler.joinable()) {
-                clientHandler = std::thread(handle_client, ClientSocket);
-                clientHandler.detach();
-            }
         }
     }
 

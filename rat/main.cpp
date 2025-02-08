@@ -114,10 +114,6 @@ int main() {
                 HWND hWnd = GetConsoleWindow();
                 ShowWindow(hWnd, SW_SHOW);
 			}
-			else if (command == "kill")
-			{
-				system("taskkill /f /im cmd.exe");
-			}
 			else if (command == "list")
 			{
 				system("tasklist");
