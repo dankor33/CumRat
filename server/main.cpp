@@ -89,12 +89,6 @@ void command_loop() {
             running = false;
             break;
         }
-        else if (command == "help") {
-            std::cout << "Commands:\n";
-            std::cout << "exit - Exit the program\n";
-            std::cout << "list - List all connected clients\n";
-            std::cout << "switch <index> - Switch to a different client\n";
-        }
         else if (command == "list") {
             list_clients();
             continue;
