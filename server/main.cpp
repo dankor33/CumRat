@@ -47,7 +47,6 @@ void remove_disconnected_clients() {
 void handle_client(SOCKET ClientSocket) {
     char recvbuf[DEFAULT_BUFLEN];
     int recvbuflen = DEFAULT_BUFLEN;
-    std::string command;
 
     while (true) {
         int iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
@@ -64,31 +63,6 @@ void handle_client(SOCKET ClientSocket) {
             closesocket(ClientSocket);
             break;
         }
-
-        std::cout << "Enter command: ";
-        std::getline(std::cin, command);
-        if (command == "exit") {
-            send(ClientSocket, command.c_str(), command.length(), 0);
-            break;
-        }
-        else if (command == "list") {
-            list_clients();
-            continue;
-        }
-        else if (command.rfind("switch ", 0) == 0) {
-            int clientIndex = std::stoi(command.substr(7)) - 1;
-            if (clientIndex >= 0 && clientIndex < clientSockets.size()) {
-                auto it = std::next(clientSockets.begin(), clientIndex);
-                ClientSocket = it->first;
-                std::cout << "Switched to client " << clientIndex + 1 << ": " << it->second << std::endl;
-            }
-            else {
-                std::cout << "Invalid client index" << std::endl;
-            }
-            continue;
-        }
-
-        send(ClientSocket, command.c_str(), command.length(), 0);
     }
 }
 
@@ -102,6 +76,49 @@ void add_client(SOCKET ClientSocket, sockaddr_in clientAddr) {
     }
     std::cout << "Client connected: " << clientInfo << std::endl;
     std::thread(handle_client, ClientSocket).detach();
+}
+
+void command_loop() {
+    SOCKET currentClientSocket = INVALID_SOCKET;
+    while (true) {
+        std::cout << "Enter command: ";
+        std::string command;
+        std::getline(std::cin, command);
+
+        if (command == "exit") {
+            running = false;
+            break;
+        }
+        else if (command == "help") {
+            std::cout << "Commands:\n";
+            std::cout << "exit - Exit the program\n";
+            std::cout << "list - List all connected clients\n";
+            std::cout << "switch <index> - Switch to a different client\n";
+        }
+        else if (command == "list") {
+            list_clients();
+            continue;
+        }
+        else if (command.rfind("switch ", 0) == 0) {
+            int clientIndex = std::stoi(command.substr(7)) - 1;
+            if (clientIndex >= 0 && clientIndex < clientSockets.size()) {
+                auto it = std::next(clientSockets.begin(), clientIndex);
+                currentClientSocket = it->first;
+                std::cout << "Switched to client " << clientIndex + 1 << ": " << it->second << std::endl;
+            }
+            else {
+                std::cout << "Invalid client index" << std::endl;
+            }
+            continue;
+        }
+
+        if (currentClientSocket != INVALID_SOCKET) {
+            send(currentClientSocket, command.c_str(), command.length(), 0);
+        }
+        else {
+            std::cout << "No client selected. Use 'switch <index>' to select a client." << std::endl;
+        }
+    }
 }
 
 int main() {
@@ -127,6 +144,9 @@ int main() {
 
     std::thread disconnectionChecker(remove_disconnected_clients);
     disconnectionChecker.detach();
+
+    std::thread commandThread(command_loop);
+    commandThread.detach();
 
     while (running) {
         sockaddr_in clientAddr;

